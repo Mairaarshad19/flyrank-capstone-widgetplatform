@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: widget_platform
+      POSTGRES_PASSWORD: widget_platform
+      POSTGRES_DB: widget_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      # Named volume = data survives `docker compose down` (not `-v`).
+      # This is the difference between "restart the container" and
+      # "lose every submission you've ever collected."
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U widget_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  postgres_data:
