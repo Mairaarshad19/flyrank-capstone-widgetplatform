@@ -49,8 +49,64 @@ transcript, or a log line. Filled in as each phase completes — not at the end.
   409 on duplicate email registration, 422 on invalid payload (short password),
   204 on delete.
 
+## Try it locally (Phase 3 manual verification)
+
+Once `docker compose up --build` is running:
+
+```bash
+# 1. Register a tenant + get a token
+curl -s -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_name": "Acme Bakery", "email": "owner@acme.com", "password": "supersecret123"}' \
+  | tee /tmp/token.json
+
+TOKEN=$(python3 -c "import json;print(json.load(open('/tmp/token.json'))['access_token'])")
+
+# 2. Create a widget — copy the "id" from the response
+curl -s -X POST http://localhost:8000/widgets \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"type": "signup_form", "title": "10% off", "config": {"fields": ["email"], "button_text": "Join"}}'
+
+# 3. Put that id into static/test-page/index.html (replace WIDGET_ID_HERE),
+#    then serve the test page on a DIFFERENT origin/port:
+cd static/test-page && python3 -m http.server 5500
+```
+
+Open `http://localhost:5500` in a browser — the widget should render, fetched
+live from the API on port 8000, on a page that has no other connection to it.
+
+## API docs
+
+Full interactive documentation (auto-generated from the code, always in sync):
+`http://localhost:8000/docs`
+
 ## Widget Delivery
 _(Phase 3)_
+
+- **Full test suite green (19/19)**, including cache/ETag behavior:
+  ```
+  $ pytest -v
+  ... 19 passed in 4.22s
+  ```
+- **Public config endpoint requires no auth** — `test_public_config_requires_no_auth`
+  hits `/widgets/{id}/config` with no `Authorization` header at all, exactly
+  like a stranger's browser would.
+- **Correct cache headers** — config responses carry `Cache-Control: public,
+  max-age=60` and an `ETag`; a repeat request with a matching `If-None-Match`
+  gets a `304`, and the ETag changes the moment the widget's config is edited
+  (`test_etag_changes_when_config_is_updated`) — so a stale cache can never
+  outlive a real change.
+- **Paused and nonexistent widgets are indistinguishable** — both return an
+  identical 404 from the public endpoint (`test_public_config_404_for_paused_widget`).
+- **Bundle is versioned and cached forever** — `/static/widget/widget.v1.js`
+  is served with `Cache-Control: public, max-age=31536000, immutable`; a
+  future breaking change ships as `widget.v2.js`, a new URL, never a mutation
+  of this one.
+- **Manual cross-origin render** — verified via `docker compose up` +
+  `static/test-page/index.html` served on a second local port; see "Try it
+  locally" above. (Run this yourself and paste the result here — this is the
+  one step I can't execute inside this sandbox, since it needs a real
+  Postgres instance and a real browser.)
 
 ## Public Submission API
 _(Phase 4)_
