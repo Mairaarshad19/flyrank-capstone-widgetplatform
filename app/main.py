@@ -20,6 +20,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
@@ -37,6 +38,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+
+# Explicit allow-list, never "*" — this same policy also governs the public
+# submission endpoint (Phase 4), which must never accept an arbitrary origin.
+# Full preflight (OPTIONS) handling is exercised end-to-end once POST
+# /submissions exists; this GET path just needs the CORS headers present.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 
 
 @app.middleware("http")
@@ -89,8 +101,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # Routers are registered here as they're built out (Phase 2+):
 from app.api.auth import router as auth_router  # noqa: E402
 from app.api.health import router as health_router  # noqa: E402
+from app.api.public import router as public_router  # noqa: E402
 from app.api.widgets import router as widgets_router  # noqa: E402
 
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(widgets_router)
+app.include_router(public_router)

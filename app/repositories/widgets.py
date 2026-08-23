@@ -11,7 +11,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.widget import Widget
+from app.models.widget import Widget, WidgetStatus
 
 
 class WidgetRepository:
@@ -35,3 +35,12 @@ class WidgetRepository:
 
     async def delete(self, widget: Widget) -> None:
         await self.session.delete(widget)
+
+    async def get_active_public(self, widget_id: uuid.UUID) -> Widget | None:
+        """Public lookup: NO tenant filter, by design, not omission — this is
+        what backs the public config endpoint any visitor's browser calls.
+        Only ever returns ACTIVE widgets; a paused widget is invisible to the
+        public API exactly like a nonexistent one (same 404, no distinction)."""
+        stmt = select(Widget).where(Widget.id == widget_id, Widget.status == WidgetStatus.ACTIVE)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
