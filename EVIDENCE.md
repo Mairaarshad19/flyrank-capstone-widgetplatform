@@ -108,6 +108,23 @@ _(Phase 3)_
   one step I can't execute inside this sandbox, since it needs a real
   Postgres instance and a real browser.)
 
+## Hotfix — enum storage bug caught in real Docker use
+
+- **Real bug, real Postgres, caught by manual testing** — `POST /auth/register`
+  500'd against live Postgres despite all tests being green on SQLite. See
+  `BUILDLOG.md` "Phase 2/3 hotfix" for the full root-cause story.
+- **Regression test added and proven to catch the bug**:
+  ```
+  $ pytest tests/test_enum_db_values.py -v
+  test_user_role_enum_binds_lowercase_value_for_postgres PASSED
+  test_widget_type_enum_binds_lowercase_value_for_postgres PASSED
+  test_widget_status_enum_binds_lowercase_value_for_postgres PASSED
+  ```
+  Confirmed this test actually fails without the fix (reverted `role`'s
+  column definition, reran, got `AssertionError: assert 'OWNER' == 'owner'`,
+  then restored the fix).
+- **Full suite after fix**: `22 passed in 4.09s`.
+
 ## Public Submission API
 _(Phase 4)_
 
