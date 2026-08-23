@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     ENV: Literal["dev", "test", "prod"] = "dev"
     APP_NAME: str = "Widget & Lead-Capture Platform"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    # Used to build the <script src="..."> embed snippet returned with each widget.
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
 
     # --- Database ---
     DATABASE_URL: str = Field(..., description="asyncpg SQLAlchemy URL, e.g. postgresql+asyncpg://user:pass@host/db")
