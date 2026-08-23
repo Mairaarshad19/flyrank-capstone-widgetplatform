@@ -5,8 +5,18 @@ before Alembic autogenerate or `Base.metadata.create_all` runs — a model
 that's never imported never gets its table created, which is a classic
 "works until you add the next table" bug.
 """
+from app.models.submission import NotificationStatus, Submission
 from app.models.tenant import Tenant
 from app.models.user import User, UserRole
 from app.models.widget import Widget, WidgetStatus, WidgetType
 
-__all__ = ["Tenant", "User", "UserRole", "Widget", "WidgetStatus", "WidgetType"]
+__all__ = [
+    "Tenant",
+    "User",
+    "UserRole",
+    "Widget",
+    "WidgetStatus",
+    "WidgetType",
+    "Submission",
+    "NotificationStatus",
+]
