@@ -10,10 +10,15 @@ alembic==1.13.2
 # --- Config & validation ---
 pydantic==2.9.2
 pydantic-settings==2.5.2
+email-validator==2.2.0
 
 # --- Auth ---
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+passlib==1.7.4
+# Pinned below 4.1: newer bcrypt releases dropped an internal attribute
+# passlib's self-test relies on, which breaks password hashing entirely
+# (a real "works until you `pip install -U`" trap — pin it deliberately).
+bcrypt==4.0.1
 
 # --- Rate limiting ---
 slowapi==0.1.9
