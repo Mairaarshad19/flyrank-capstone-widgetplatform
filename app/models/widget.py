@@ -31,13 +31,22 @@ class Widget(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    type: Mapped[WidgetType] = mapped_column(SAEnum(WidgetType), nullable=False)
+    type: Mapped[WidgetType] = mapped_column(
+        SAEnum(WidgetType, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        nullable=False,
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1000))
     # Form fields, button text, display options. See DESIGN.md § 6 non-goal —
     # this is configured as JSON, not through a visual builder.
     config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    status: Mapped[WidgetStatus] = mapped_column(SAEnum(WidgetStatus), default=WidgetStatus.ACTIVE, nullable=False)
+    # See app/models/user.py's `role` column for why values_callable is required
+    # on every enum column here — it's the same SQLAlchemy-name-vs-value trap.
+    status: Mapped[WidgetStatus] = mapped_column(
+        SAEnum(WidgetStatus, values_callable=lambda enum_cls: [member.value for member in enum_cls]),
+        default=WidgetStatus.ACTIVE,
+        nullable=False,
+    )
     # Bumped on every config change. Phase 3 uses this to cache-bust the
     # public config endpoint without needing a content hash.
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
