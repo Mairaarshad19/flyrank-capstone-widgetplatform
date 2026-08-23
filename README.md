@@ -104,7 +104,8 @@ provider; see `DESIGN.md` for the full non-goals list.)_
 ## Status
 
 - [x] Phase 0 — foundations: config, logging, DB pooling, health checks, Docker, CI-ready test setup
-- [ ] Phase 1 — design doc
+- [x] Phase 1 — design doc: data model, tenancy rule, idempotency strategy, API surface (see `DESIGN.md`)
+- [x] Phase 2 — auth (JWT), tenant isolation, full widget CRUD — 12/12 tests passing
 - [ ] Phase 2 — auth, tenancy, widget CRUD
 - [ ] Phase 3 — embed snippet & cached delivery
 - [ ] Phase 4 — hardened public submission path
