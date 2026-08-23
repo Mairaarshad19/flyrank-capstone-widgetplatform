@@ -20,7 +20,8 @@ def get_widget_service(db: AsyncSession = Depends(get_db)) -> WidgetService:
 
 def _to_widget_out(widget: Widget) -> WidgetOut:
     out = WidgetOut.model_validate(widget)
-    out.embed_snippet = f'<script src="{settings.PUBLIC_BASE_URL}/static/widget/widget.js?id={widget.id}"></script>'
+    bundle_url = f"{settings.PUBLIC_BASE_URL}/static/widget/widget.{settings.WIDGET_BUNDLE_VERSION}.js"
+    out.embed_snippet = f'<script src="{bundle_url}?id={widget.id}"></script>'
     return out
 
 

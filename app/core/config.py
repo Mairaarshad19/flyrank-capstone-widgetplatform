@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     # Used to build the <script src="..."> embed snippet returned with each widget.
     PUBLIC_BASE_URL: str = "http://localhost:8000"
+    # Bumped when the widget.js loader itself ships a breaking change.
+    # A new version = a new URL (widget.v2.js), never mutating this file's
+    # content in place — see app/api/public.py.
+    WIDGET_BUNDLE_VERSION: str = "v1"
 
     # --- Database ---
     DATABASE_URL: str = Field(..., description="asyncpg SQLAlchemy URL, e.g. postgresql+asyncpg://user:pass@host/db")
