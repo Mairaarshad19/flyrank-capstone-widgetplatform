@@ -42,6 +42,12 @@
   function renderForm(container, widgetConfig) {
     var fields = (widgetConfig.config && widgetConfig.config.fields) || ["email"];
     var buttonText = (widgetConfig.config && widgetConfig.config.button_text) || "Submit";
+    // Generated once, before the first submit attempt. A retried request
+    // (flaky network, accidental double-click) reuses this same key, so the
+    // server stores the submission exactly once no matter how many times it
+    // arrives. See DESIGN.md § 4.
+    var idempotencyKey =
+      (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + Math.random();
 
     var form = document.createElement("form");
     form.setAttribute("novalidate", "true");
@@ -87,7 +93,7 @@
       event.preventDefault();
 
       var formData = new FormData(form);
-      var payload = { widget_id: widgetId, fields: {}, honeypot: "" };
+      var payload = { widget_id: widgetId, fields: {}, honeypot: "", idempotency_key: idempotencyKey };
       formData.forEach(function (value, key) {
         if (key === "hp_field") {
           payload.honeypot = value;
