@@ -19,12 +19,16 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.rate_limit import limiter
 
 configure_logging()
 logger = logging.getLogger("app")
@@ -49,6 +53,32 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
+
+# --- Rate limiting (per-IP; per-widget lives inside app/api/submissions.py) ---
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
+# --- Reject oversized bodies before they're even parsed. Checked via
+# Content-Length rather than reading the full stream, since the point is to
+# reject cheaply, before spending any work on a payload we're going to
+# discard anyway. ---
+MAX_SUBMISSION_BODY_BYTES = 20_000  # generous for a lead-capture form
+
+
+@app.middleware("http")
+async def limit_submission_body_size(request: Request, call_next):
+    if request.url.path == "/submissions" and request.method == "POST":
+        content_length = request.headers.get("content-length")
+        if content_length is not None and int(content_length) > MAX_SUBMISSION_BODY_BYTES:
+            return JSONResponse(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                content={
+                    "error": "payload_too_large",
+                    "message": f"Request body exceeds {MAX_SUBMISSION_BODY_BYTES} bytes.",
+                },
+            )
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -102,9 +132,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 from app.api.auth import router as auth_router  # noqa: E402
 from app.api.health import router as health_router  # noqa: E402
 from app.api.public import router as public_router  # noqa: E402
+from app.api.submissions import router as submissions_router  # noqa: E402
 from app.api.widgets import router as widgets_router  # noqa: E402
 
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(widgets_router)
 app.include_router(public_router)
+app.include_router(submissions_router)
