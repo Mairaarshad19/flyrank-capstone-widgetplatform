@@ -11,8 +11,7 @@ from app.db.session import Base
 
 # Import every model module here so Base.metadata is fully populated
 # before autogenerate compares it against the live database.
-# (added incrementally in Phase 2 as models are created)
-# from app.models import tenant, user, widget, submission  # noqa
+from app.models import Tenant, User, Widget  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
