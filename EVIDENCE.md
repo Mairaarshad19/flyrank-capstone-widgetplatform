@@ -126,13 +126,52 @@ _(Phase 3)_
 - **Full suite after fix**: `22 passed in 4.09s`.
 
 ## Public Submission API
-_(Phase 4)_
+
+- **Full test suite green (38/38)**:
+  ```
+  $ pytest -v
+  ... 38 passed in 12.67s
+  ```
+- **CORS correctly enforced** — `test_cors_preflight_allowed_origin_succeeds`
+  proves a real preflight from an allowed origin gets the right headers;
+  `test_cors_preflight_disallowed_origin_is_rejected` proves a disallowed
+  origin gets NO `Access-Control-Allow-Origin` header at all.
+- **Boundary validation, never a 500** — malformed `widget_id`, unknown
+  fields (`extra="forbid"`), and empty `fields` all return clean 422s.
+  Oversized bodies (>20KB) return 413 before the payload is ever parsed.
+- **Nonexistent and paused widgets both 404 identically** — the public
+  internet cannot tell "doesn't exist" from "exists but paused" apart.
 
 ## Abuse Protection
-_(Phase 4)_
+
+- **Per-IP rate limiting** — `test_per_ip_rate_limit_returns_429_but_service_stays_up`
+  bursts 12 requests across 12 different widgets from one client, proving the
+  shared per-IP counter (not per-widget) is what trips, AND that an unrelated
+  endpoint (`/health/live`) keeps responding normally throughout the burst.
+- **Per-widget rate limiting** — `test_per_widget_rate_limit_returns_429_under_burst`
+  isolates this dimension by staying under the per-IP threshold while
+  exceeding the per-widget one on a single widget.
+- **Honeypot spam control** — `test_honeypot_filled_submission_is_dropped_not_stored`
+  proves a bot filling the hidden field gets a normal-looking 201 (so it
+  never learns it was caught) while nothing is actually written to the database.
 
 ## Enrichment & Safe Side Effects
-_(Phase 4)_
+
+- **Fallback chain proven** — `test_enrichment_falls_back_to_provider_b_when_a_fails`
+  injects a provider that always fails and one that always answers, and
+  confirms the stored row has the fallback provider's data and
+  `geo_provider_used` correctly names which one answered.
+- **Full degradation proven** — `test_enrichment_stores_submission_without_geo_when_all_providers_fail`
+  injects two failing providers and confirms the submission still returns
+  201 and is stored, just with `geo_country`/`geo_city`/`geo_provider_used`
+  all `None` — degrade, never fail.
+- **Safe side effect proven** — `test_failing_notification_does_not_block_submission`
+  injects a notifier that always raises and confirms the submission still
+  returns 201, is stored, and its `notification_status` is correctly
+  recorded as `FAILED` — the failure is visible in data, never in the response.
+- **Idempotency proven** — `test_idempotent_resubmission_returns_same_row_not_a_duplicate`
+  submits the same `idempotency_key` twice and confirms both requests return
+  the identical row id and exactly one row exists in the database.
 
 ## Owner Dashboard
 _(Phase 5)_

@@ -107,6 +107,7 @@ provider; see `DESIGN.md` for the full non-goals list.)_
 - [x] Phase 1 — design doc: data model, tenancy rule, idempotency strategy, API surface (see `DESIGN.md`)
 - [x] Phase 2 — auth (JWT), tenant isolation, full widget CRUD — 12/12 tests passing
 - [x] Phase 3 — embed snippet, cached public config delivery, versioned widget.js, test page — 19/19 tests passing
+- [x] Phase 4 — hardened public submission path: CORS, validation, rate limiting, spam control, geo fallback chain, safe side effects, idempotency — 38/38 tests passing
 - [ ] Phase 2 — auth, tenancy, widget CRUD
 - [ ] Phase 3 — embed snippet & cached delivery
 - [ ] Phase 4 — hardened public submission path
