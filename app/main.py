@@ -130,6 +130,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 # Routers are registered here as they're built out (Phase 2+):
 from app.api.auth import router as auth_router  # noqa: E402
+from app.api.dashboard import router as dashboard_router  # noqa: E402
 from app.api.health import router as health_router  # noqa: E402
 from app.api.public import router as public_router  # noqa: E402
 from app.api.submissions import router as submissions_router  # noqa: E402
@@ -140,3 +141,4 @@ app.include_router(auth_router)
 app.include_router(widgets_router)
 app.include_router(public_router)
 app.include_router(submissions_router)
+app.include_router(dashboard_router)
