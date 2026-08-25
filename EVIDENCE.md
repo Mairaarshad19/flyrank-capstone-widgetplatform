@@ -173,8 +173,32 @@ _(Phase 3)_
   submits the same `idempotency_key` twice and confirms both requests return
   the identical row id and exactly one row exists in the database.
 
-## Owner Dashboard
-_(Phase 5)_
+## Owner dashboard
+
+- **Full test suite green (44/44)**:
+  ```
+  $ pytest -v
+  ... 44 passed in 16.78s
+  ```
+- **Requires auth** — `test_dashboard_routes_require_auth` proves both
+  `/dashboard/submissions` and `/dashboard/stats` reject unauthenticated
+  requests (401/403).
+- **Correct pagination** — `test_list_submissions_scoped_to_tenant_and_paginated`
+  proves `total` reflects the full matching set even when `limit` returns
+  fewer items than that.
+- **Filter by widget** — `test_list_submissions_filter_by_widget_id` proves
+  `?widget_id=` narrows results to exactly that widget's submissions.
+- **Aggregation math verified, not just "doesn't crash"** —
+  `test_stats_aggregation_totals_and_per_widget_breakdown` creates a known
+  number of submissions across two widgets and asserts the exact counts per
+  widget and per day match. `test_stats_geo_breakdown_matches_enriched_data`
+  injects a fixed-country mock geo provider and asserts the country breakdown
+  matches exactly.
+- **Tenant isolation on aggregates, not just row-level reads** —
+  `test_stats_are_isolated_per_tenant` proves tenant A's `total_submissions`
+  and tenant B's are correctly separate — an aggregate query is just as easy
+  to leak across tenants as a single-row lookup if `tenant_id` isn't filtered
+  everywhere, and this is the test that would catch it.
 
 ## Tests & Documentation
 _(Phase 6)_
