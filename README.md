@@ -79,7 +79,7 @@ docker compose exec app python -m app.seed
 
 This prints a login you can use straight away:
 ```
-Login:   demo@acme-bakery.test / demo-password-123
+Login:   demo@acme-bakery-demo.io / demo-password-123
 ```
 Safe to run more than once — it's a no-op if the demo tenant already exists
 (see `tests/test_seed.py`, which proves this).

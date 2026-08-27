@@ -24,8 +24,13 @@ from app.models.tenant import Tenant
 from app.models.user import User, UserRole
 from app.models.widget import Widget, WidgetStatus, WidgetType
 
-DEMO_EMAIL = "demo@acme-bakery.test"
+DEMO_EMAIL = "demo@acme-bakery-demo.io"
 DEMO_PASSWORD = "demo-password-123"
+# Deliberately NOT a .test/.example/.invalid/.localhost domain: those are
+# RFC 2606 reserved TLDs, and Pydantic's EmailStr (via the email-validator
+# package) rejects them as a syntax-level guard — independent of and in
+# addition to DNS deliverability checks. Using demo@acme-bakery.test here
+# originally made POST /auth/register return 422 before login() ever ran.
 
 # (country, city) pairs to scatter across demo submissions, including one
 # None/None pair to simulate a submission where geo enrichment failed —
