@@ -1,0 +1,53 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # Real Postgres, not SQLite — deliberately. The enum name-vs-value bug
+    # documented in BUILDLOG.md ("Phase 2/3 hotfix") passed every test on
+    # SQLite and only failed against Postgres. CI running against SQLite
+    # would have shipped that bug straight to main.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: widget_platform
+          POSTGRES_PASSWORD: widget_platform
+          POSTGRES_DB: widget_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U widget_platform"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://widget_platform:widget_platform@localhost:5432/widget_platform
+      JWT_SECRET: ci-test-secret-do-not-use-in-production-please-1234567890
+      ALLOWED_ORIGINS: http://localhost:5500
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run migrations against real Postgres
+        run: alembic upgrade head
+
+      - name: Run tests
+        run: pytest -v
