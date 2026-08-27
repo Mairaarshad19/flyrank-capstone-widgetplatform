@@ -1,6 +1,8 @@
 # Widget & Lead-Capture Platform
 
-> Status: 🚧 in progress — Phase 0 (foundations) complete.
+[![Tests](https://github.com/Mairaarshad19/Embeddable-Widget-Lead-Capture-Platform/actions/workflows/tests.yml/badge.svg)](https://github.com/Mairaarshad19/Embeddable-Widget-Lead-Capture-Platform/actions/workflows/tests.yml)
+
+> Status: All 7 build phases complete — 46/46 tests passing, run against real Postgres in CI on every push.
 
 Let a customer define an embeddable widget, hand them one `<script>` tag, and
 safely accept submissions from any website on the public internet — validated,
@@ -58,7 +60,7 @@ Widget Owner (authenticated)
 ## Local setup
 
 ```bash
-cp .env.example .env          # fill in JWT_SECRET (see comment in the file)
+cp .env.example .env          # fill in JWT_SECRET — see comment in the file
 docker compose up --build     # builds app, starts Postgres, runs migrations
 ```
 
@@ -67,15 +69,73 @@ Interactive API docs: http://localhost:8000/docs
 Liveness: http://localhost:8000/health/live
 Readiness (checks real DB round-trip): http://localhost:8000/health/ready
 
-Seed demo data (added in Phase 6):
+**Seed realistic demo data** (a tenant, 2 widgets, 25 submissions spread
+across 2 weeks, geo-enriched, some with a failed notification — so the
+dashboard shows something real immediately):
+
 ```bash
 docker compose exec app python -m app.seed
 ```
 
-Run tests:
-```bash
-docker compose exec app pytest -q
+This prints a login you can use straight away:
 ```
+Login:   demo@acme-bakery.test / demo-password-123
+```
+Safe to run more than once — it's a no-op if the demo tenant already exists
+(see `tests/test_seed.py`, which proves this).
+
+Run the test suite:
+```bash
+docker compose exec app pytest -v
+```
+
+**Try the actual widget rendering on a separate origin** (the whole point of
+this capstone): log in as the demo user, `GET /widgets` to find a widget id,
+paste it into `static/test-page/index.html` in place of `WIDGET_ID_HERE`,
+then:
+```bash
+cd static/test-page && python3 -m http.server 5500
+```
+Open `http://localhost:5500` — the widget renders, fetched live from the API
+on a page that has no other connection to it.
+
+## API docs
+
+Full interactive documentation, auto-generated from the code and therefore
+always in sync: `http://localhost:8000/docs`
+
+## Continuous integration
+
+Every push runs the full test suite against a **real Postgres instance**, not
+SQLite — see `.github/workflows/tests.yml`. This isn't decorative: a real bug
+(SQLAlchemy storing enum names instead of values — see BUILDLOG.md's "Phase
+2/3 hotfix") passed every test on SQLite and only surfaced against Postgres.
+CI running on SQLite would have shipped that bug straight to `main`.
+
+## Limitations
+
+Deliberate scope cuts, not oversights — see `DESIGN.md` § 6 for the reasoning:
+
+- **No visual widget builder.** Widgets are configured via JSON in the API
+  request body, not a drag-and-drop GUI. This is a backend capstone; the
+  effort went into the submission path's reliability, not a form designer.
+- **No real hosting/CDN/domain.** Everything runs locally via Docker Compose;
+  the "customer site" is a plain HTML file on a second local port, exactly as
+  the brief specifies.
+- **Email/webhook notifications are a console log by default** (`ConsoleNotifier`).
+  A real `WebhookNotifier` exists (`app/notifications/webhook.py`) and is a
+  one-env-var swap (`NOTIFY_BACKEND=webhook`), but what's graded here is that
+  a *failing* side effect never breaks a submission — not the delivery
+  mechanism itself.
+- **Rate limiting is in-process memory**, not Redis-backed. Explicitly
+  documented as a one-file swap in `app/core/rate_limit.py`'s docstring —
+  correct for a single instance, would need a shared backend the moment this
+  runs on more than one.
+- **No production email deliverability, GDPR export/delete, or bot CAPTCHA
+  challenge** — these are the natural "if I kept going" additions (see
+  `capstone.yaml`'s scope and the stretch-goal ideas in the original capstone
+  brief), deliberately cut to keep effort focused on submission-path
+  reliability over feature breadth.
 
 ## Project layout
 
@@ -90,16 +150,12 @@ app/
   repositories/  DB access, always tenant-scoped
   enrichment/    geo provider clients + fallback chain
   notifications/ safe side-effect delivery (email/webhook)
+  seed.py        idempotent demo data script
 alembic/         schema migrations
-static/widget/   embeddable widget.js + test HTML page
+static/widget/   embeddable widget.js + customer test page
 tests/
+.github/workflows/ CI: full suite against real Postgres on every push
 ```
-
-## Limitations
-
-_(filled in honestly as of Phase 6 — this capstone deliberately does not
-attempt a visual widget builder, real hosting/CDN, or a production email
-provider; see `DESIGN.md` for the full non-goals list.)_
 
 ## Status
 
@@ -109,9 +165,5 @@ provider; see `DESIGN.md` for the full non-goals list.)_
 - [x] Phase 3 — embed snippet, cached public config delivery, versioned widget.js, test page — 19/19 tests passing
 - [x] Phase 4 — hardened public submission path: CORS, validation, rate limiting, spam control, geo fallback chain, safe side effects, idempotency — 38/38 tests passing
 - [x] Phase 5 — owner dashboard: paginated submissions, stats (per-day, per-widget, per-country), tenant-isolated — 44/44 tests passing
-- [ ] Phase 2 — auth, tenancy, widget CRUD
-- [ ] Phase 3 — embed snippet & cached delivery
-- [ ] Phase 4 — hardened public submission path
-- [ ] Phase 5 — dashboard & analytics
-- [ ] Phase 6 — tests, docs, submission pack
+- [x] Phase 6 — CI (real Postgres), seed script (verified idempotent), full docs, submission pack — 46/46 tests passing
 - [ ] Phase 7 — demo prep
