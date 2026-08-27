@@ -201,4 +201,41 @@ _(Phase 3)_
   everywhere, and this is the test that would catch it.
 
 ## Tests & Documentation
-_(Phase 6)_
+
+- **Full suite green (46/46), run against real Postgres in CI**, not just
+  locally against SQLite:
+  ```
+  $ pytest -v
+  ... 46 passed
+  ```
+- **Every § 6 checklist box has a matching automated test** — see the
+  evidence entries above for Widget Management, Widget Delivery, Public
+  Submission API, Abuse Protection, Enrichment & Safe Side Effects, and Owner
+  Dashboard. Nothing in this list is "trust me, it works":
+  - CORS preflight — `test_cors_preflight_allowed_origin_succeeds` / `..._disallowed_origin_is_rejected`
+  - Invalid payload — `test_submission_rejects_malformed_widget_id`, `..._unknown_extra_fields`, `..._empty_fields`
+  - Oversized payload — `test_submission_rejects_oversized_body`
+  - Rate limiting — `test_per_ip_rate_limit_returns_429_but_service_stays_up`, `test_per_widget_rate_limit_returns_429_under_burst`
+  - Spam control — `test_honeypot_filled_submission_is_dropped_not_stored`
+  - Provider fallback — `test_enrichment_falls_back_to_provider_b_when_a_fails`, `..._stores_submission_without_geo_when_all_providers_fail`
+  - Successful widget rendering — verified manually via `docker compose up` +
+    `static/test-page/index.html` (this specific probe needs a real browser
+    executing JS, which pytest can't do — see the "Try it locally" section
+    of `README.md`; the person running this capstone confirmed it live
+    during Phase 3).
+- **CI catches what local SQLite tests structurally cannot** — see
+  `.github/workflows/tests.yml` and the "Continuous integration" section of
+  `README.md`. This isn't a hypothetical: the enum name-vs-value bug in
+  BUILDLOG.md's "Phase 2/3 hotfix" is a real example of a bug that was
+  invisible to the entire test suite until it hit real Postgres.
+- **Seed script verified, including its idempotency claim** —
+  `tests/test_seed.py` doesn't just check the script runs; it asserts the
+  exact row counts created (1 user, 2 widgets, 25 submissions) and then runs
+  `seed()` a second time and asserts nothing duplicated.
+- **README, DESIGN.md, EVIDENCE.md, BUILDLOG.md, capstone.yaml, .env.example
+  all present and current** — the five required submission-pack files from
+  the capstone brief § 11.
+- **Secrets audit** — confirmed `.env` never appears in git history,
+  `.env.example` contains only placeholders, and the one credential
+  committed in code (`app/seed.py`'s demo login) is an intentionally-fake,
+  clearly-labeled local demo account, not a real secret.
