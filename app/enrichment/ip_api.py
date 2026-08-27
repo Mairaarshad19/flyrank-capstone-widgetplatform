@@ -8,6 +8,13 @@ class IpApiProvider(GeoProvider):
     name = "ip_api_com"
 
     async def lookup(self, ip_address: str) -> GeoResult | None:
+        if settings.GEO_PROVIDER_A_FORCE_FAIL:
+            # Demo/testing toggle — see GEO_PROVIDER_A_FORCE_FAIL in
+            # app/core/config.py. Lets the fallback chain be demonstrated
+            # live and reliably, instead of hoping a real outage happens
+            # to occur at the right moment during a demo.
+            return None
+
         url = settings.GEO_PROVIDER_A_URL.format(ip=ip_address)
         try:
             async with httpx.AsyncClient(timeout=settings.GEO_PROVIDER_TIMEOUT_SECONDS) as client:
