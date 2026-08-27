@@ -57,10 +57,18 @@ class Settings(BaseSettings):
     GEO_PROVIDER_A_URL: str = "http://ip-api.com/json/{ip}"
     GEO_PROVIDER_B_URL: str = "https://ipapi.co/{ip}/json/"
     GEO_PROVIDER_TIMEOUT_SECONDS: float = 2.0
+    # Demo/testing aid ONLY — never set true in a real deployment. Forces
+    # provider A to behave as if it were down, without depending on a real
+    # third-party outage happening to occur during a live demo. See
+    # app/enrichment/ip_api.py.
+    GEO_PROVIDER_A_FORCE_FAIL: bool = False
 
     # --- Notifications (safe side effect) ---
     NOTIFY_BACKEND: Literal["console", "webhook"] = "console"
     NOTIFY_WEBHOOK_URL: str | None = None
+    # Same demo/testing purpose as GEO_PROVIDER_A_FORCE_FAIL above, applied
+    # to the notification side effect. See app/notifications/console.py.
+    NOTIFY_FORCE_FAIL: bool = False
 
     @field_validator("DATABASE_URL")
     @classmethod
