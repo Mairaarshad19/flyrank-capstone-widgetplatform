@@ -254,3 +254,24 @@ _(Phase 3)_
   ("special-use or reserved name that cannot be used with email") when
   `DEMO_EMAIL` is reverted to `demo@acme-bakery.test`, then restored.
 - **Full suite after fix**: `47 passed`.
+
+## Phase 7 — Demo prep
+
+- **Full suite green (50/50)**, including new demo-toggle tests:
+  ```
+  $ pytest -v
+  ... 50 passed
+  ```
+- **Reproducible failure demonstration, not luck-dependent** — added
+  `GEO_PROVIDER_A_FORCE_FAIL` and `NOTIFY_FORCE_FAIL` env toggles so the two
+  "break something live" moments in the demo (§ 13 of the brief) don't depend
+  on a real third-party outage happening to occur at the right moment.
+  `test_geo_provider_a_force_fail_toggle_returns_none` and
+  `test_notify_force_fail_toggle_raises` prove both toggles actually work;
+  `test_toggles_are_off_by_default` guards against ever shipping them
+  accidentally enabled.
+- **Rehearsed demo script** — see `DEMO_SCRIPT.md`, mapping every beat of the
+  brief's 6-minute demo to real commands against the actual running system,
+  including the exact curl commands for the CORS/burst/malformed-payload
+  self-attack and the code-walkthrough talking points for the "explain 2–3
+  lines" evaluator question.

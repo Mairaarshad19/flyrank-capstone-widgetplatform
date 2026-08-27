@@ -48,6 +48,24 @@ Updated as I go, not reconstructed at the end.
   reappear even though it lives entirely on the SQLite/Postgres seam that the
   rest of the suite can't see.
 
+## Phase 7 — Demo prep
+
+- **Where AI helped:** recognizing that two steps in the brief's suggested
+  demo ("kill the primary geo provider live," "break the email side effect")
+  are fragile as written — they depend on a real third-party outage or a
+  console logger "failing" on its own, neither of which is controllable at
+  demo time.
+- **Where I made the call myself:** adding explicit, boring env-var toggles
+  (`GEO_PROVIDER_A_FORCE_FAIL`, `NOTIFY_FORCE_FAIL`) rather than trying to
+  simulate the failure some cleverer way. Deliberately named and documented
+  as demo/testing-only in three places (config docstring, `.env.example`
+  comment, and the provider/notifier code itself) so there's no ambiguity
+  that these should never be true in a real deployment.
+- **What I verified rather than trusted:** wrote and ran tests for both
+  toggles before writing a single line of `DEMO_SCRIPT.md` — a demo script
+  built around a mechanism I hadn't confirmed actually works would be worse
+  than no script at all.
+
 ## Phase 6 — CI, seed script, and docs
 
 - **Where AI helped:** structuring the GitHub Actions workflow (the exact

@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/Mairaarshad19/Embeddable-Widget-Lead-Capture-Platform/actions/workflows/tests.yml/badge.svg)](https://github.com/Mairaarshad19/Embeddable-Widget-Lead-Capture-Platform/actions/workflows/tests.yml)
 
-> Status: All 7 build phases complete — 46/46 tests passing, run against real Postgres in CI on every push.
+> Status: All 7 build phases complete — 50/50 tests passing, run against real Postgres in CI on every push.
 
 Let a customer define an embeddable widget, hand them one `<script>` tag, and
 safely accept submissions from any website on the public internet — validated,
@@ -165,5 +165,5 @@ tests/
 - [x] Phase 3 — embed snippet, cached public config delivery, versioned widget.js, test page — 19/19 tests passing
 - [x] Phase 4 — hardened public submission path: CORS, validation, rate limiting, spam control, geo fallback chain, safe side effects, idempotency — 38/38 tests passing
 - [x] Phase 5 — owner dashboard: paginated submissions, stats (per-day, per-widget, per-country), tenant-isolated — 44/44 tests passing
-- [x] Phase 6 — CI (real Postgres), seed script (verified idempotent), full docs, submission pack — 46/46 tests passing
-- [ ] Phase 7 — demo prep
+- [x] Phase 6 — CI (real Postgres), seed script (verified idempotent), full docs, submission pack — 47/47 tests passing
+- [x] Phase 7 — demo prep: reproducible failure toggles, rehearsed 6-minute script (see `DEMO_SCRIPT.md`) — 50/50 tests passing
