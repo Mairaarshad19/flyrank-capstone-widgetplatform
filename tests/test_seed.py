@@ -7,6 +7,7 @@ from app import seed as seed_module
 from app.models.submission import Submission
 from app.models.user import User
 from app.models.widget import Widget
+from app.schemas.auth import RegisterRequest
 
 
 def _patch_session_scope(monkeypatch, db_session):
@@ -15,6 +16,18 @@ def _patch_session_scope(monkeypatch, db_session):
         yield db_session
 
     monkeypatch.setattr(seed_module, "session_scope", fake_session_scope)
+
+
+def test_demo_email_passes_the_same_validation_register_uses():
+    """Regression test: demo@acme-bakery.test previously failed here, because
+    email-validator (which backs Pydantic's EmailStr) rejects RFC 2606
+    reserved TLDs (.test/.example/.invalid/.localhost) as a syntax-level
+    guard — independent of DNS deliverability checks. This caused
+    POST /auth/register to 422 on the seeded demo login before login() ever
+    ran. This test validates the DEMO_EMAIL constant through the exact same
+    Pydantic schema the real endpoint uses, so this class of bug can't
+    silently come back if the demo email is ever changed again."""
+    RegisterRequest(tenant_name="Acme Bakery (demo)", email=seed_module.DEMO_EMAIL, password=seed_module.DEMO_PASSWORD)
 
 
 @pytest.mark.asyncio
