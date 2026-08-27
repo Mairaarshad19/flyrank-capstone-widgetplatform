@@ -47,3 +47,30 @@ Updated as I go, not reconstructed at the end.
   This is now a permanent regression test; this exact bug can't silently
   reappear even though it lives entirely on the SQLite/Postgres seam that the
   rest of the suite can't see.
+
+## Phase 6 — CI, seed script, and docs
+
+- **Where AI helped:** structuring the GitHub Actions workflow (the exact
+  `services:` block syntax for running Postgres as a CI service container,
+  and its healthcheck options) and the seed script's data-shape choices
+  (spreading submissions across a date range, mixing in a `None`/`None` geo
+  pair to simulate a failed enrichment realistically).
+- **Where I made the call myself:** deciding CI should run against real
+  Postgres, not SQLite, specifically *because* of the Phase 2/3 enum bug —
+  that bug is the concrete argument for why this matters, not an abstract
+  best practice. Also decided the seed script needed its own test rather
+  than being "obviously fine because it's just inserts" — a seed script that
+  silently duplicates data on every re-run is a real, smaller version of the
+  same idempotency bug class the submission endpoint guards against.
+- **What I verified rather than trusted:** ran `tests/test_seed.py` for
+  real — first confirming it creates exactly 1 demo user, 2 widgets, and 25
+  submissions, then calling `seed()` a second time and confirming the counts
+  don't double. Also ran a manual secrets audit (`git log --all --full-history
+  -- .env`, grep across tracked files for secret-shaped strings) rather than
+  assuming `.gitignore` alone was sufficient proof nothing leaked.
+- **What I'd do differently with more time:** the per-widget/per-IP rate
+  limiter is in-process memory, documented as a known limitation — the
+  moment this runs on more than one instance, both counters need to move to
+  Redis or another shared store. Left as a documented limitation rather than
+  built, since the capstone's grading weight is on correctness and
+  resilience of the pattern, not premature horizontal-scaling infrastructure.
