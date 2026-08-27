@@ -74,3 +74,29 @@ Updated as I go, not reconstructed at the end.
   Redis or another shared store. Left as a documented limitation rather than
   built, since the capstone's grading weight is on correctness and
   resilience of the pattern, not premature horizontal-scaling infrastructure.
+
+## Hotfix — seed demo email rejected by EmailStr (found by the user testing the seed script)
+
+- **The bug:** `DEMO_EMAIL = "demo@acme-bakery.test"` failed Pydantic's
+  `EmailStr` validation with "reserved name that cannot be used with email" —
+  before `login()` or `register()` ever ran. Root cause: `email-validator`
+  (which backs `EmailStr`) special-cases RFC 2606 reserved TLDs (`.test`,
+  `.example`, `.invalid`, `.localhost`) and rejects them at the syntax level,
+  entirely independent of DNS deliverability checks being on or off.
+- **Why nothing in the test suite caught it originally:** `tests/test_seed.py`
+  tested the seed script's *database* behavior (row counts, idempotency) by
+  calling `seed()` directly — it never round-tripped the demo email through
+  the actual Pydantic schema the real `/auth/register` endpoint uses, so the
+  validation-layer bug was invisible to it. The person building this caught
+  it manually by actually trying to log in with the seeded credentials.
+- **The fix:** changed `DEMO_EMAIL` to `demo@acme-bakery-demo.io` — any TLD
+  outside the RFC 2606 reserved set works, since no DNS check happens by
+  default.
+- **The regression test added, and proven to catch the bug**:
+  `test_demo_email_passes_the_same_validation_register_uses` constructs a
+  real `RegisterRequest` (the exact schema `/auth/register` validates
+  against) using `seed_module.DEMO_EMAIL`. Deliberately reverted the fix,
+  reran, and got the identical error message reported
+  ("special-use or reserved name"), then restored the fix and confirmed all
+  47 tests pass. Same discipline as the earlier enum hotfix: don't just fix
+  it, prove the regression test actually catches it.

@@ -239,3 +239,18 @@ _(Phase 3)_
   `.env.example` contains only placeholders, and the one credential
   committed in code (`app/seed.py`'s demo login) is an intentionally-fake,
   clearly-labeled local demo account, not a real secret.
+
+## Hotfix — seed demo email rejected by EmailStr
+
+- **Real bug, caught by the person actually trying to log in** with the
+  seeded credentials, not by any automated test. See `BUILDLOG.md`
+  "Hotfix — seed demo email rejected by EmailStr" for the full root-cause story.
+- **Regression test added and proven to catch the bug**:
+  ```
+  $ pytest tests/test_seed.py::test_demo_email_passes_the_same_validation_register_uses -v
+  PASSED
+  ```
+  Confirmed this test fails with the exact reported error
+  ("special-use or reserved name that cannot be used with email") when
+  `DEMO_EMAIL` is reverted to `demo@acme-bakery.test`, then restored.
+- **Full suite after fix**: `47 passed`.
